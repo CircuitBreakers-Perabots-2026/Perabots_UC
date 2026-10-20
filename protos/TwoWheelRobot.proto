@@ -12,7 +12,806 @@ PROTO TwoWheelRobot [
   field SFString   controller     "<none>"
   field MFString   controllerArgs []
   field SFColor    bodyColor      0.15 0.15 0.6
-  field MFNode     extensionSlot  []
+  field MFNode     extensionSlot  [
+      # Sensors occupy < 12cm in each horizontal dimension. No physics or
+      # collision shapes are added; all base mechanics remain unchanged.
+      InertialUnit { name "heading" }
+      Camera {
+        translation 0.015 0 0.018
+        rotation 0 1 0 1.57079632679
+        name "floor_camera"
+        fieldOfView 0.8
+        width 24
+        height 24
+        near 0.001
+      }
+      # A second ring reads horizontally before the base settles.
+      DistanceSensor {
+        translation 0.045000000 0.000000000 0.04
+        rotation 0 0 1 0.000000000000
+        name "startup_00"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.044615019 0.005873679 0.04
+        rotation 0 0 1 0.130899693900
+        name "startup_01"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.043466662 0.011646857 0.04
+        rotation 0 0 1 0.261799387799
+        name "startup_02"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.041574579 0.017220754 0.04
+        rotation 0 0 1 0.392699081699
+        name "startup_03"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.038971143 0.022500000 0.04
+        rotation 0 0 1 0.523598775598
+        name "startup_04"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.035700900 0.027394264 0.04
+        rotation 0 0 1 0.654498469498
+        name "startup_05"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.031819805 0.031819805 0.04
+        rotation 0 0 1 0.785398163397
+        name "startup_06"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.027394264 0.035700900 0.04
+        rotation 0 0 1 0.916297857297
+        name "startup_07"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.022500000 0.038971143 0.04
+        rotation 0 0 1 1.047197551197
+        name "startup_08"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.017220754 0.041574579 0.04
+        rotation 0 0 1 1.178097245096
+        name "startup_09"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.011646857 0.043466662 0.04
+        rotation 0 0 1 1.308996938996
+        name "startup_10"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.005873679 0.044615019 0.04
+        rotation 0 0 1 1.439896632895
+        name "startup_11"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.000000000 0.045000000 0.04
+        rotation 0 0 1 1.570796326795
+        name "startup_12"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.005873679 0.044615019 0.04
+        rotation 0 0 1 1.701696020694
+        name "startup_13"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.011646857 0.043466662 0.04
+        rotation 0 0 1 1.832595714594
+        name "startup_14"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.017220754 0.041574579 0.04
+        rotation 0 0 1 1.963495408494
+        name "startup_15"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.022500000 0.038971143 0.04
+        rotation 0 0 1 2.094395102393
+        name "startup_16"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.027394264 0.035700900 0.04
+        rotation 0 0 1 2.225294796293
+        name "startup_17"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.031819805 0.031819805 0.04
+        rotation 0 0 1 2.356194490192
+        name "startup_18"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.035700900 0.027394264 0.04
+        rotation 0 0 1 2.487094184092
+        name "startup_19"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.038971143 0.022500000 0.04
+        rotation 0 0 1 2.617993877991
+        name "startup_20"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.041574579 0.017220754 0.04
+        rotation 0 0 1 2.748893571891
+        name "startup_21"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.043466662 0.011646857 0.04
+        rotation 0 0 1 2.879793265791
+        name "startup_22"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.044615019 0.005873679 0.04
+        rotation 0 0 1 3.010692959690
+        name "startup_23"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.045000000 0.000000000 0.04
+        rotation 0 0 1 3.141592653590
+        name "startup_24"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.044615019 -0.005873679 0.04
+        rotation 0 0 1 3.272492347489
+        name "startup_25"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.043466662 -0.011646857 0.04
+        rotation 0 0 1 3.403392041389
+        name "startup_26"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.041574579 -0.017220754 0.04
+        rotation 0 0 1 3.534291735289
+        name "startup_27"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.038971143 -0.022500000 0.04
+        rotation 0 0 1 3.665191429188
+        name "startup_28"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.035700900 -0.027394264 0.04
+        rotation 0 0 1 3.796091123088
+        name "startup_29"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.031819805 -0.031819805 0.04
+        rotation 0 0 1 3.926990816987
+        name "startup_30"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.027394264 -0.035700900 0.04
+        rotation 0 0 1 4.057890510887
+        name "startup_31"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.022500000 -0.038971143 0.04
+        rotation 0 0 1 4.188790204786
+        name "startup_32"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.017220754 -0.041574579 0.04
+        rotation 0 0 1 4.319689898686
+        name "startup_33"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.011646857 -0.043466662 0.04
+        rotation 0 0 1 4.450589592586
+        name "startup_34"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.005873679 -0.044615019 0.04
+        rotation 0 0 1 4.581489286485
+        name "startup_35"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.000000000 -0.045000000 0.04
+        rotation 0 0 1 4.712388980385
+        name "startup_36"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.005873679 -0.044615019 0.04
+        rotation 0 0 1 4.843288674284
+        name "startup_37"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.011646857 -0.043466662 0.04
+        rotation 0 0 1 4.974188368184
+        name "startup_38"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.017220754 -0.041574579 0.04
+        rotation 0 0 1 5.105088062083
+        name "startup_39"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.022500000 -0.038971143 0.04
+        rotation 0 0 1 5.235987755983
+        name "startup_40"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.027394264 -0.035700900 0.04
+        rotation 0 0 1 5.366887449883
+        name "startup_41"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.031819805 -0.031819805 0.04
+        rotation 0 0 1 5.497787143782
+        name "startup_42"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.035700900 -0.027394264 0.04
+        rotation 0 0 1 5.628686837682
+        name "startup_43"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.038971143 -0.022500000 0.04
+        rotation 0 0 1 5.759586531581
+        name "startup_44"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.041574579 -0.017220754 0.04
+        rotation 0 0 1 5.890486225481
+        name "startup_45"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.043466662 -0.011646857 0.04
+        rotation 0 0 1 6.021385919380
+        name "startup_46"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.044615019 -0.005873679 0.04
+        rotation 0 0 1 6.152285613280
+        name "startup_47"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      # The supplied base settles nose-down on its fixed contact geometry.
+      # This passive mount keeps ranging rays horizontal in that resting pose.
+      Pose {
+        translation -0.024 0 0.032
+        rotation 0 1 0 -0.643501108793
+        children [
+          Camera {
+            translation 0 0 0.04
+            rotation 0 1 0 0.4
+            name "ahead_camera"
+            fieldOfView 0.45
+            width 24
+            height 24
+            near 0.001
+          }
+      DistanceSensor {
+        translation 0.045000000 0.000000000 0
+        rotation 0 0 1 0.000000000000
+        name "range_00"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.044615019 0.005873679 0
+        rotation 0 0 1 0.130899693900
+        name "range_01"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.043466662 0.011646857 0
+        rotation 0 0 1 0.261799387799
+        name "range_02"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.041574579 0.017220754 0
+        rotation 0 0 1 0.392699081699
+        name "range_03"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.038971143 0.022500000 0
+        rotation 0 0 1 0.523598775598
+        name "range_04"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.035700900 0.027394264 0
+        rotation 0 0 1 0.654498469498
+        name "range_05"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.031819805 0.031819805 0
+        rotation 0 0 1 0.785398163397
+        name "range_06"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.027394264 0.035700900 0
+        rotation 0 0 1 0.916297857297
+        name "range_07"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.022500000 0.038971143 0
+        rotation 0 0 1 1.047197551197
+        name "range_08"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.017220754 0.041574579 0
+        rotation 0 0 1 1.178097245096
+        name "range_09"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.011646857 0.043466662 0
+        rotation 0 0 1 1.308996938996
+        name "range_10"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.005873679 0.044615019 0
+        rotation 0 0 1 1.439896632895
+        name "range_11"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.000000000 0.045000000 0
+        rotation 0 0 1 1.570796326795
+        name "range_12"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.005873679 0.044615019 0
+        rotation 0 0 1 1.701696020694
+        name "range_13"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.011646857 0.043466662 0
+        rotation 0 0 1 1.832595714594
+        name "range_14"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.017220754 0.041574579 0
+        rotation 0 0 1 1.963495408494
+        name "range_15"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.022500000 0.038971143 0
+        rotation 0 0 1 2.094395102393
+        name "range_16"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.027394264 0.035700900 0
+        rotation 0 0 1 2.225294796293
+        name "range_17"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.031819805 0.031819805 0
+        rotation 0 0 1 2.356194490192
+        name "range_18"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.035700900 0.027394264 0
+        rotation 0 0 1 2.487094184092
+        name "range_19"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.038971143 0.022500000 0
+        rotation 0 0 1 2.617993877991
+        name "range_20"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.041574579 0.017220754 0
+        rotation 0 0 1 2.748893571891
+        name "range_21"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.043466662 0.011646857 0
+        rotation 0 0 1 2.879793265791
+        name "range_22"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.044615019 0.005873679 0
+        rotation 0 0 1 3.010692959690
+        name "range_23"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.045000000 0.000000000 0
+        rotation 0 0 1 3.141592653590
+        name "range_24"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.044615019 -0.005873679 0
+        rotation 0 0 1 3.272492347489
+        name "range_25"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.043466662 -0.011646857 0
+        rotation 0 0 1 3.403392041389
+        name "range_26"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.041574579 -0.017220754 0
+        rotation 0 0 1 3.534291735289
+        name "range_27"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.038971143 -0.022500000 0
+        rotation 0 0 1 3.665191429188
+        name "range_28"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.035700900 -0.027394264 0
+        rotation 0 0 1 3.796091123088
+        name "range_29"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.031819805 -0.031819805 0
+        rotation 0 0 1 3.926990816987
+        name "range_30"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.027394264 -0.035700900 0
+        rotation 0 0 1 4.057890510887
+        name "range_31"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.022500000 -0.038971143 0
+        rotation 0 0 1 4.188790204786
+        name "range_32"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.017220754 -0.041574579 0
+        rotation 0 0 1 4.319689898686
+        name "range_33"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.011646857 -0.043466662 0
+        rotation 0 0 1 4.450589592586
+        name "range_34"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.005873679 -0.044615019 0
+        rotation 0 0 1 4.581489286485
+        name "range_35"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation -0.000000000 -0.045000000 0
+        rotation 0 0 1 4.712388980385
+        name "range_36"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.005873679 -0.044615019 0
+        rotation 0 0 1 4.843288674284
+        name "range_37"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.011646857 -0.043466662 0
+        rotation 0 0 1 4.974188368184
+        name "range_38"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.017220754 -0.041574579 0
+        rotation 0 0 1 5.105088062083
+        name "range_39"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.022500000 -0.038971143 0
+        rotation 0 0 1 5.235987755983
+        name "range_40"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.027394264 -0.035700900 0
+        rotation 0 0 1 5.366887449883
+        name "range_41"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.031819805 -0.031819805 0
+        rotation 0 0 1 5.497787143782
+        name "range_42"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.035700900 -0.027394264 0
+        rotation 0 0 1 5.628686837682
+        name "range_43"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.038971143 -0.022500000 0
+        rotation 0 0 1 5.759586531581
+        name "range_44"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.041574579 -0.017220754 0
+        rotation 0 0 1 5.890486225481
+        name "range_45"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.043466662 -0.011646857 0
+        rotation 0 0 1 6.021385919380
+        name "range_46"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+      DistanceSensor {
+        translation 0.044615019 -0.005873679 0
+        rotation 0 0 1 6.152285613280
+        name "range_47"
+        type "generic"
+        lookupTable [ 0 0 0, 3 3 0 ]
+        numberOfRays 1
+      }
+        ]
+      }
+  ]
 ] {
   Robot {
     translation IS translation

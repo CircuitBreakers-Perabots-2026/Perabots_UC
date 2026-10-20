@@ -1,0 +1,144 @@
+[
+  {
+    "reason": "finished",
+    "time": 317.79200000000003,
+    "distance": 18.2392055226877,
+    "collisions": 0,
+    "position": [
+      2.2101023923237952,
+      2.172636717143252,
+      0.00397384372514268
+    ],
+    "inside_end": true,
+    "led_delay": 1.4399999999999977,
+    "stopped_drift": 6.167633430409703e-08,
+    "early_led": false,
+    "telemetry": {
+      "phase": "finished",
+      "floor": "red",
+      "pose": [
+        2.208547308340503,
+        2.1786952393600063,
+        1.5889118361881085
+      ],
+      "visited": 36,
+      "counts": {
+        "blue": 2,
+        "green": 3
+      },
+      "majority": "green",
+      "error": null,
+      "leds": {
+        "blue": 0,
+        "green": 1
+      },
+      "wheels": [
+        0.0,
+        0.0
+      ]
+    },
+    "scenario": "continuous",
+    "seed": 42,
+    "official_lighting": true,
+    "runtime_sha256": {
+      "controllers/main_controller/main_controller.py": "d21e17dc692078d59b49a171cb3cd9eb2378534d29fd146290d5fc63521da49e",
+      "controllers/main_controller/navigation.py": "fa07b9232da7b290358a4206b15038e02119fb902b50a57f21a92197391c7eec",
+      "protos/TwoWheelRobot.proto": "7f6fc72c77db24299500b027ed948aa8c9358f28a93ff00ddc30b8c9335424ae"
+    },
+    "passed": true
+  },
+  {
+    "reason": "finished",
+    "time": 243.296,
+    "distance": 14.602841072209607,
+    "collisions": 0,
+    "position": [
+      2.210102380814432,
+      2.172635530492907,
+      0.003973843608042683
+    ],
+    "inside_end": true,
+    "led_delay": 1.4399999999999977,
+    "stopped_drift": 4.6937451889371155e-08,
+    "early_led": false,
+    "telemetry": {
+      "phase": "finished",
+      "floor": "red",
+      "pose": [
+        1.995101708505118,
+        0.8976720859962579,
+        1.5889113321068544
+      ],
+      "visited": 36,
+      "counts": {
+        "blue": 2,
+        "green": 3
+      },
+      "majority": "green",
+      "error": null,
+      "leds": {
+        "blue": 0,
+        "green": 1
+      },
+      "wheels": [
+        0.0,
+        0.0
+      ]
+    },
+    "passed": true,
+    "runtime_sha256": {
+      "controllers/main_controller/main_controller.py": "d21e17dc692078d59b49a171cb3cd9eb2378534d29fd146290d5fc63521da49e",
+      "controllers/main_controller/navigation.py": "fa07b9232da7b290358a4206b15038e02119fb902b50a57f21a92197391c7eec",
+      "protos/TwoWheelRobot.proto": "7f6fc72c77db24299500b027ed948aa8c9358f28a93ff00ddc30b8c9335424ae"
+    },
+    "scenario": "chamber"
+  },
+  {
+    "reason": "finished",
+    "time": 348.64,
+    "distance": 21.111759322040115,
+    "collisions": 0,
+    "position": [
+      0.20779152357246622,
+      1.7248981698008672,
+      0.003973843716834999
+    ],
+    "inside_end": true,
+    "led_delay": 1.5679999999999836,
+    "stopped_drift": 6.249860917801542e-08,
+    "early_led": false,
+    "telemetry": {
+      "phase": "finished",
+      "floor": "red",
+      "pose": [
+        0.21733578373599838,
+        1.739811885453809,
+        -1.5620954254899828
+      ],
+      "visited": 36,
+      "counts": {
+        "blue": 3,
+        "green": 2
+      },
+      "majority": "blue",
+      "error": null,
+      "leds": {
+        "blue": 1,
+        "green": 0
+      },
+      "wheels": [
+        0.0,
+        0.0
+      ]
+    },
+    "scenario": "generated-continuous",
+    "seed": 42,
+    "official_lighting": false,
+    "runtime_sha256": {
+      "controllers/main_controller/main_controller.py": "d21e17dc692078d59b49a171cb3cd9eb2378534d29fd146290d5fc63521da49e",
+      "controllers/main_controller/navigation.py": "fa07b9232da7b290358a4206b15038e02119fb902b50a57f21a92197391c7eec",
+      "protos/TwoWheelRobot.proto": "7f6fc72c77db24299500b027ed948aa8c9358f28a93ff00ddc30b8c9335424ae"
+    },
+    "passed": true
+  }
+]
