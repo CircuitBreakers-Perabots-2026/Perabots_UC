@@ -15,6 +15,7 @@ RANGE = 3.0
 WHEEL_RADIUS = 0.02
 AXLE = 0.064
 BODY_RADIUS = 0.068
+TRAVEL_RADIUS = BODY_RADIUS + 0.014
 PITCH = 0.25
 DIRECTIONS = ((1, 0), (0, 1), (-1, 0), (0, -1))
 
@@ -32,6 +33,12 @@ class Pose:
     x: float
     y: float
     yaw: float
+    pitch: float = 0.0
+
+    @property
+    def axle(self):
+        offset = WHEEL_RADIUS * math.sin(self.pitch)
+        return self.x + offset * math.cos(self.yaw), self.y + offset * math.sin(self.yaw)
 
     def distance(self, target):
         return math.hypot(target[0] - self.x, target[1] - self.y)
@@ -42,16 +49,26 @@ class Odometry:
         self.pose = pose
         self.previous = None
 
-    def update(self, left, right, yaw):
-        if not all(math.isfinite(v) for v in (left, right, yaw)):
+    def update(self, left, right, yaw, pitch=0.0):
+        if not all(math.isfinite(v) for v in (left, right, yaw, pitch)):
             raise ValueError('Invalid encoder or IMU reading')
         if self.previous is not None:
-            distance = WHEEL_RADIUS * ((left - self.previous[0]) + (right - self.previous[1])) / 2
+            distance = WHEEL_RADIUS * (((left - self.previous[0]) +
+                                        (right - self.previous[1])) / 2 +
+                                       pitch - self.previous[2])
             heading = self.pose.yaw + wrap(yaw - self.pose.yaw) / 2
-            self.pose.x += distance * math.cos(heading)
-            self.pose.y += distance * math.sin(heading)
-        self.previous = left, right
+            # Wheel centers are 20mm above the Robot origin. With a pitched
+            # chassis, that origin orbits the axle when turning; integrate the
+            # axle, then transform back to the origin used by the sensor map.
+            old_offset = WHEEL_RADIUS * math.sin(self.previous[2])
+            new_offset = WHEEL_RADIUS * math.sin(pitch)
+            self.pose.x += (distance * math.cos(heading) +
+                            old_offset * math.cos(self.pose.yaw) - new_offset * math.cos(yaw))
+            self.pose.y += (distance * math.sin(heading) +
+                            old_offset * math.sin(self.pose.yaw) - new_offset * math.sin(yaw))
+        self.previous = left, right, pitch
         self.pose.yaw = wrap(yaw)
+        self.pose.pitch = pitch
 
 
 def classify_rgb(red, green, blue):
@@ -91,6 +108,12 @@ def cardinal_ranges(ranges, yaw):
             + SENSOR_RADIUS for direction in range(4)]
 
 
+def ray_height(distance, relative_angle, pitch):
+    """Approximate beam height while the base settles between sensor rings."""
+    mount_pitch = math.atan2(0.6, 0.8) if pitch > 0.3 else 0.0
+    return 0.04 - math.sin(pitch-mount_pitch)*math.cos(relative_angle)*distance
+
+
 class OccupancyGrid:
     """Incremental ray map and footprint-inflated path search."""
     resolution = 0.025
@@ -100,6 +123,9 @@ class OccupancyGrid:
     def __init__(self):
         self.evidence = {}
         self.visits = {}
+        self.covered = set()
+        self.goal = None
+        self.escaping = False
         self.exit_samples = []
 
     def cell(self, x, y):
@@ -112,39 +138,56 @@ class OccupancyGrid:
         return 0 <= cell[0] < self.width and 0 <= cell[1] < self.height
 
     def update(self, pose, ranges):
-        here = self.cell(pose.x, pose.y)
+        here = self.cell(*pose.axle)
+        if here not in self.visits:
+            # Sparse rays leave small unknown slivers even around places we
+            # have already inspected from all directions. Do not select those
+            # slivers as new exploration goals and shuttle along the same path.
+            radius = math.ceil(0.10 / self.resolution)
+            for dx in range(-radius, radius + 1):
+                for dy in range(-radius, radius + 1):
+                    if math.hypot(dx, dy) * self.resolution <= 0.10:
+                        self.covered.add((here[0] + dx, here[1] + dy))
         self.visits[here] = self.visits.get(here, 0) + 1
+        free_cells, hit_cells = set(), set()
         for index, distance in enumerate(ranges):
             angle = pose.yaw + TAU * index / RAY_COUNT
             c, s = math.cos(angle), math.sin(angle)
             length = min(RANGE, distance) + SENSOR_RADIUS
-            free = set()
             for step in range(int((length - 0.025) / 0.02)):
                 cell = self.cell(pose.x + step * 0.02 * c, pose.y + step * 0.02 * s)
                 if self.inside(cell):
-                    free.add(cell)
-            for cell in free:
-                self.evidence[cell] = max(-8, self.evidence.get(cell, 0) - 1)
+                    free_cells.add(cell)
             if distance < RANGE - 0.01:
                 cell = self.cell(pose.x + length * c, pose.y + length * s)
                 if self.inside(cell):
-                    self.evidence[cell] = min(12, self.evidence.get(cell, 0) + 4)
+                    hit_cells.add(cell)
             # Discover the transition from rays that pass through the north wall.
             # No transition X coordinate or obstacle position is supplied.
             if s > 0.15 and pose.y < 1.20 and pose.y + length * s > 1.30:
                 x = pose.x + (1.22 - pose.y) * c / s
-                if 0.06 < x < 2.38:
+                height = ray_height((1.22-pose.y)/s, TAU*index/RAY_COUNT, pose.pitch)
+                # A tilted ray may pass over the 10cm boundary wall. Only
+                # crossings within the wall's vertical span prove an opening.
+                if 0.06 < x < 2.38 and 0.015 < height < 0.085:
                     self.exit_samples.append(x)
                     self.exit_samples = self.exit_samples[-100:]
+        # A grazing ray may cross the empty part of a voxel hit by another
+        # ray. Aggregate the scan first: a measured surface wins over free
+        # space, and each voxel gets exactly one vote per complete scan.
+        for cell in free_cells - hit_cells:
+            self.evidence[cell] = max(-8, self.evidence.get(cell, 0) - 1)
+        for cell in hit_cells:
+            self.evidence[cell] = min(12, self.evidence.get(cell, 0) + 4)
 
     def blocked(self):
         occupied = {cell for cell, value in self.evidence.items() if value >= 2}
         blocked = set()
-        padding = math.ceil(BODY_RADIUS / self.resolution) + 1
+        padding = math.ceil(TRAVEL_RADIUS / self.resolution) + 1
         for x, y in occupied:
             for dx in range(-padding, padding + 1):
                 for dy in range(-padding, padding + 1):
-                    if math.hypot(max(0, abs(dx) - 0.5), max(0, abs(dy) - 0.5)) * self.resolution < BODY_RADIUS:
+                    if math.hypot(max(0, abs(dx) - 0.5), max(0, abs(dy) - 0.5)) * self.resolution < TRAVEL_RADIUS:
                         blocked.add((x + dx, y + dy))
         for x in range(self.width):
             for y in range(self.height):
@@ -172,34 +215,71 @@ class OccupancyGrid:
         return distances, parents
 
     def route(self, pose):
-        start = self.cell(pose.x, pose.y)
-        distances, parents = self.search(start, self.blocked() - {start})
+        self.goal = None
+        self.escaping = False
+        start = self.cell(*pose.axle)
+        blocked = self.blocked()
+        if start in blocked:
+            # A newly seen obstacle can put the current cell inside the extra
+            # safety margin. Bridge outward to free space rather than spinning
+            # in a cell whose inflated neighbours all forbid an ordinary path.
+            origin = pose.axle
+            nearby = [self.point(c) for c, v in self.evidence.items()
+                      if v >= 2 and math.dist(self.point(c), origin) < 0.35]
+            def clearance(point):
+                return min((math.hypot(max(0, abs(point[0]-p[0])-self.resolution/2),
+                                       max(0, abs(point[1]-p[1])-self.resolution/2))
+                            for p in nearby), default=1.0)
+            minimum = clearance(origin) - 0.001
+            candidates = []
+            for dx in range(-4, 5):
+                for dy in range(-4, 5):
+                    cell = start[0]+dx, start[1]+dy
+                    if not self.inside(cell) or cell in blocked or self.evidence.get(cell, 0) >= 0:
+                        continue
+                    point = self.point(cell)
+                    steps = max(1, math.ceil(math.dist(origin, point)/0.005))
+                    if all(clearance((origin[0]+(point[0]-origin[0])*i/steps,
+                                      origin[1]+(point[1]-origin[1])*i/steps)) >= minimum
+                           for i in range(steps+1)):
+                        candidates.append(point)
+            if candidates:
+                self.escaping = True
+                return [min(candidates, key=lambda p: math.dist(origin, p))]
+        distances, parents = self.search(start, blocked - {start})
         if self.exit_samples:
             sx = sorted(self.exit_samples)
             goal = self.cell(sx[len(sx) // 2], 1.27)
             if goal not in distances:
                 goal = min(distances, key=lambda c: math.dist(c, goal))
         else:
-            frontiers = [c for c in distances if self.evidence.get(c, 0) < 0
+            frontiers = [c for c in distances if c not in self.covered
+                         and self.evidence.get(c, 0) < 0
                          and self.point(c)[1] < 1.17
                          and any(self.evidence.get((c[0] + dx, c[1] + dy), 0) == 0
                                  for dx, dy in DIRECTIONS)]
             if not frontiers:
                 return []
             goal = min(frontiers, key=lambda c: distances[c] - 2 * c[1] + 0.03 * self.visits.get(c, 0))
+        self.goal = goal
         path = [goal]
         while path[-1] != start:
             path.append(parents[path[-1]])
         path.reverse()
         if len(path) < 2:
             return []
-        end = 1
-        while end + 1 < min(len(path), 7):
-            a, b = path[end], path[end + 1]
-            if (b[0] - a[0], b[1] - a[1]) != (path[1][0] - start[0], path[1][1] - start[1]):
-                break
-            end += 1
-        return [self.point(path[end])]
+        waypoints, index = [], 0
+        while index < len(path) - 1:
+            end = index + 1
+            direction = (path[end][0] - path[index][0], path[end][1] - path[index][1])
+            while end + 1 < len(path) and end - index < 6:
+                a, b = path[end], path[end + 1]
+                if (b[0] - a[0], b[1] - a[1]) != direction:
+                    break
+                end += 1
+            waypoints.append(self.point(path[end]))
+            index = end
+        return waypoints
 
 
 class Maze:
@@ -275,18 +355,26 @@ class Maze:
 
 def drive_to(pose, target, ranges, max_speed=6.0, tolerance=0.012):
     """Turn in place, then track a waypoint with a swept-footprint guard."""
-    distance = pose.distance(target)
+    # Steering and arrival refer to the drive axle. The chassis origin sits
+    # behind it when tilted; steering that rear point chases its own rotation
+    # around tiny centering targets and never converges.
+    x, y = pose.axle
+    distance = math.hypot(target[0] - x, target[1] - y)
     if distance < tolerance:
         return 0.0, 0.0, True
-    error = wrap(math.atan2(target[1] - pose.y, target[0] - pose.x) - pose.yaw)
+    error = wrap(math.atan2(target[1] - y, target[0] - x) - pose.yaw)
     turn = clamp(error * 3.0, -2.2, 2.2)
     speed = min(0.10, 1.5 * distance) if abs(error) < 0.22 else 0.0
     for index, reading in enumerate(ranges):
         angle = TAU * index / RAY_COUNT
         x = (reading + SENSOR_RADIUS) * math.cos(angle)
         y = (reading + SENSOR_RADIUS) * math.sin(angle)
-        if x > 0 and abs(y) < BODY_RADIUS:
-            speed = min(speed, max(0, (x - BODY_RADIUS - 0.014) * 2))
+        if x > 0 and abs(y) < TRAVEL_RADIUS:
+            # Translation sweeps a circle along +X. A point near its side
+            # meets the circular cap later than a point directly ahead.
+            # A rectangular cap incorrectly stops at safe diagonal corners.
+            cap = math.sqrt(max(0, TRAVEL_RADIUS ** 2 - y ** 2))
+            speed = min(speed, max(0, (x - cap) * 2))
     left = (speed - turn * AXLE / 2) / WHEEL_RADIUS
     right = (speed + turn * AXLE / 2) / WHEEL_RADIUS
     factor = max(1, abs(left) / max_speed, abs(right) / max_speed)

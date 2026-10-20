@@ -5,6 +5,7 @@ from pathlib import Path
 import random
 import sys
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'controllers/main_controller'))
@@ -32,6 +33,66 @@ class PerceptionTests(unittest.TestCase):
 
 
 class MotionTests(unittest.TestCase):
+    def test_maze_does_not_learn_floor_hit_as_a_wall(self):
+        mission = Mission()
+        mission.phase, mission.origin = 'maze', (0, 0.18)
+        mission.pose.y, mission.pose.yaw = 0.18, math.pi/2
+        ranges = [3]*RAY_COUNT
+        ranges[0] = 0.5905-SENSOR_RADIUS
+        ranges[12] = ranges[36] = 0.119-SENSOR_RADIUS
+        ranges[24] = 1.455-SENSOR_RADIUS
+        for step in range(4):
+            self.assertEqual(mission.step(step*0.016, ranges, (0, 0), math.pi/2,
+                                          'black', pitch=0.067), (0, 0))
+        self.assertEqual(mission.maze.visited, set())
+
+    def test_distant_maze_wall_corrects_corridor_slip_before_turn(self):
+        mission = Mission()
+        mission.origin = (0, 0)
+        mission.cell = (0, 1)
+        mission.pose.y = 0.25
+        mission.align_center([0.119, 0.659, 0.119, 3])
+        self.assertAlmostEqual(mission.pose.y, 0.225)
+
+    def test_maze_entry_accepts_centered_axle_with_tilted_chassis(self):
+        mission = Mission()
+        mission.phase = 'maze_entry'
+        mission.pose.x = 0.012000000001
+        mission.pose.yaw = math.pi
+        mission.target = (0, 0)
+        ranges = [3] * RAY_COUNT
+        ranges[24] = 0.119 - mission.pose.x - SENSOR_RADIUS
+        ranges[0] = 0.119 + mission.pose.x - SENSOR_RADIUS
+        ranges[36] = 0.869 - SENSOR_RADIUS
+        mission.step(0, ranges, (0, 0), math.pi, 'black', pitch=math.asin(0.6))
+        self.assertEqual(mission.phase, 'maze_centering')
+
+    def test_tilted_centering_target_does_not_orbit_with_chassis(self):
+        pitch = math.asin(0.6)
+        for yaw in (0, math.pi/2, math.pi, -math.pi/2):
+            pose = Pose(0.2 - 0.012*math.cos(yaw), 0.4 - 0.012*math.sin(yaw), yaw, pitch)
+            left, right, arrived = drive_to(pose, (0.2, 0.4), [3]*RAY_COUNT, tolerance=0.008)
+            self.assertTrue(arrived)
+            self.assertEqual((left, right), (0, 0))
+
+    def test_tilted_turn_preserves_wheel_axle_position(self):
+        pose = Pose(0, 0, 0)
+        odometry = Odometry(pose)
+        pitch = math.asin(0.6)
+        odometry.update(0, 0, 0, pitch)
+        odometry.update(-1, 1, math.pi/2, pitch)
+        self.assertAlmostEqual(pose.x, 0.012)
+        self.assertAlmostEqual(pose.y, -0.012)
+
+    def test_pitch_rotation_is_not_wheel_travel(self):
+        pose = Pose(0, 0, 0)
+        odometry = Odometry(pose)
+        pitch = math.asin(0.6)
+        odometry.update(0, 0, 0, 0)
+        odometry.update(-pitch, -pitch, 0, pitch)
+        self.assertAlmostEqual(pose.x, -0.012)
+        self.assertAlmostEqual(pose.y, 0)
+
     def test_encoder_distance_and_heading_wrap(self):
         pose = Pose(0, 0, math.pi - 0.01)
         odometry = Odometry(pose)
@@ -54,6 +115,46 @@ class MotionTests(unittest.TestCase):
         l, r, done = drive_to(Pose(0, 0, 0), (1, 0), rays)
         self.assertFalse(done)
         self.assertEqual((l, r), (0, 0))
+
+    def test_safe_cube_corner_does_not_deadlock_waypoint(self):
+        rays = [3] * RAY_COUNT
+        angle = 5 * 2 * math.pi / RAY_COUNT
+        rays[5] = 0.082 / math.cos(angle) - SENSOR_RADIUS
+        left, right, arrived = drive_to(Pose(0, 0, 0), (0.025, 0), rays)
+        self.assertFalse(arrived)
+        self.assertGreater(left, 1)
+        self.assertAlmostEqual(left, right)
+
+    def test_field_keeps_turn_waypoint_until_arrival(self):
+        mission = Mission()
+        mission.phase = 'field'
+        mission.pose.x, mission.pose.y = 1.5, 0.8
+        first, following = (1.65, 0.8), (1.65, 0.95)
+        with patch.object(mission.field, 'update'), patch.object(
+                mission.field, 'route', side_effect=[[first], [following]]) as route:
+            mission.step(0, [3] * RAY_COUNT, (0, 0), 0, 'white')
+            mission.step(0.8, [3] * RAY_COUNT, (0, 0), 0, 'white')
+            self.assertEqual(mission.target, first)
+            self.assertEqual(route.call_count, 1)
+            mission.pose.x = 1.645
+            mission.step(0.9, [3] * RAY_COUNT, (0, 0), 0, 'white')
+            self.assertIsNone(mission.target)
+            mission.step(1, [3] * RAY_COUNT, (0, 0), 0, 'white')
+            self.assertEqual(mission.target, following)
+
+    def test_field_keeps_detour_between_intermediate_waypoints(self):
+        mission = Mission()
+        mission.phase = 'field'
+        mission.pose.x, mission.pose.y = 1.5, 0.8
+        first, following = (1.65, 0.8), (1.65, 0.95)
+        with patch.object(mission.field, 'update'), patch.object(
+                mission.field, 'route', return_value=[first, following]) as route:
+            mission.step(0, [3]*RAY_COUNT, (0, 0), 0, 'white')
+            mission.pose.x = 1.645
+            mission.step(0.2, [3]*RAY_COUNT, (0, 0), 0, 'white')
+            mission.step(0.3, [3]*RAY_COUNT, (0, 0), 0, 'white')
+            self.assertEqual(mission.target, following)
+            self.assertEqual(route.call_count, 1)
 
     def test_invalid_sensor_fails_closed(self):
         mission = Mission()
@@ -156,12 +257,54 @@ class MazeTests(unittest.TestCase):
 
 
 class MappingTests(unittest.TestCase):
+    def test_new_inflation_allows_escape_away_from_obstacle(self):
+        grid = OccupancyGrid()
+        start = (48, 30)
+        grid.evidence = {(x, y): -8 for x in range(48, 54) for y in range(28, 33)}
+        grid.evidence[(45, 30)] = 12
+        self.assertIn(start, grid.blocked())
+        path = grid.route(Pose(*grid.point(start), 0))
+        self.assertTrue(grid.escaping)
+        self.assertEqual(path, [grid.point((49, 30))])
+
+    def test_ray_above_wall_is_not_a_transition(self):
+        grid = OccupancyGrid()
+        ranges = [0.1]*RAY_COUNT
+        ranges[0] = 2
+        grid.update(Pose(1.1, 0.3, math.pi/2, 0.58), ranges)
+        self.assertEqual(grid.exit_samples, [])
+        grid.update(Pose(1.1, 0.3, math.pi/2, math.atan2(0.6, 0.8)), ranges)
+        self.assertTrue(grid.exit_samples)
+
+    def test_surface_hit_wins_over_grazing_rays_in_same_scan(self):
+        grid = OccupancyGrid()
+        pose = Pose(1.0125, 1.0125, 0)
+        ranges = [3] * RAY_COUNT
+        ranges[0] = 0.035
+        hit = grid.cell(pose.x + ranges[0] + SENSOR_RADIUS, pose.y)
+        grid.update(pose, ranges)
+        self.assertGreater(grid.evidence[hit], 0)
+        for _ in range(5):
+            grid.update(pose, ranges)
+        self.assertGreaterEqual(grid.evidence[hit], 4)
+
+    def test_exploration_ignores_already_inspected_ray_gaps(self):
+        grid = OccupancyGrid()
+        start, repeated, novel = (32, 32), (33, 32), (40, 32)
+        grid.evidence = {cell: -8 for cell in (start, repeated, novel)}
+        grid.covered.update((start, repeated))
+        pose = Pose(*grid.point(start), 0)
+        self.assertTrue(grid.route(pose))
+        self.assertEqual(grid.goal, novel)
+
     def test_inflation_and_path_avoidance(self):
         grid = OccupancyGrid()
         obstacle = (30, 15)
         grid.evidence[obstacle] = 8
         blocked = grid.blocked()
         self.assertIn((29, 14), blocked)
+        # The planner includes the same 14mm travel margin as the motor guard.
+        self.assertIn((obstacle[0] + 3, obstacle[1] + 2), blocked)
         start = (20, 15)
         distances, parents = grid.search(start, blocked)
         current = (40, 15)

@@ -146,6 +146,12 @@ def prepare(scenario, output, seed=42, blue_majority=False, official_lighting=Fa
     if scenario in ('maze', 'generated-maze'):
         world = world.replace('translation 2.315 0.125 0.0025', 'translation 0.22 1.455 0.0025')
         world = world.replace('rotation 0 0 1 3.14159265359', 'rotation 0 0 1 1.57079632679')
+    if scenario == 'reported-start':
+        # The supplied screenshot's original saved pose, not our centered reset.
+        world = world.replace('translation 2.315 0.125 0.0025',
+                              'translation 2.26866 0.159772 0.00245697')
+        world = world.replace('rotation 0 0 1 3.14159265359',
+                              'rotation -0.026775583990977556 0.010250747447849066 0.9995889106421213 2.3235643717090495')
     if scenario == 'chamber':
         world = world.replace('translation 2.315 0.125 0.0025', 'translation 0.22 1.275 0.0025')
         world = world.replace('rotation 0 0 1 3.14159265359', 'rotation 0 0 1 1.57079632679')
@@ -169,6 +175,7 @@ field = team.getBaseNodeField('customData')
 previous = team.getPosition()
 distance = 0
 last_report = -10
+last_state = None
 last_motion = 0
 anchor = previous
 contacts = 0
@@ -223,9 +230,11 @@ while robot.step(32) != -1:
         end_entry = now
     if not inside_end:
         end_entry = None
-    if now - last_report > 10:
+    state = data.get('phase'), data.get('visited')
+    if now - last_report > 10 or state != last_state:
         print('MONITOR', round(now, 2), [round(v, 3) for v in p], data, flush=True)
         last_report = now
+        last_state = state
     phase = data.get('phase')
     if inside_end and first_end_entry is None:
         first_end_entry = now
@@ -279,7 +288,7 @@ while robot.step(32) != -1:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--scenario', choices=('maze', 'chamber', 'continuous', 'generated-maze', 'generated-continuous'), default='maze')
+    parser.add_argument('--scenario', choices=('maze', 'chamber', 'continuous', 'generated-maze', 'generated-continuous', 'reported-start'), default='maze')
     parser.add_argument('--output', type=Path, default=ROOT / 'output/webots-result.json')
     parser.add_argument('--official-lighting', action='store_true')
     parser.add_argument('--seed', type=int, default=42)

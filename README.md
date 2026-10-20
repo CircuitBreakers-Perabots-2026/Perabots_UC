@@ -10,6 +10,9 @@ library supplied with Webots. No third-party Python packages are required.
 2. Set Webots' Python command to a working Python 3 installation if necessary.
 3. Reset the simulation, then press Run or Fast.
 
+After pulling controller updates, reset the entire simulation before running again
+so pose estimation and the map initialize at the designated start.
+
 The robot starts entirely inside the red starting zone. It automatically handles
 continuous runs and independent Section 2 placement in the red entrance chamber
 or the first black maze cell. Independent placement may face any cardinal direction;
@@ -26,13 +29,20 @@ so both LEDs remain off. `failed` includes a diagnostic and stops the motors.
   mechanical base can pitch forward under motion; one ring covers the initial
   upright pose and a passive compensated mount covers the settled pose. These
   are individual permitted DistanceSensor devices, not a Lidar device.
-- Wheel encoders and an InertialUnit estimate motion. The controller initializes
+- Wheel encoders and an InertialUnit estimate motion, accounting for chassis
+  pitch and the offset between the axle and chassis origin. Steering and arrival
+  checks use the drive axle. The controller initializes
   within the designated southeast starting zone using measured boundary ranges.
 - Section 1 uses a ray-updated occupancy grid, footprint inflation, and path
-  search. It discovers the north-boundary opening from sensor rays and recognizes
+  search. Scan hits take priority over free-space rays, and each turn waypoint
+  stays fixed until arrival. Complete detours are retained across their
+  intermediate waypoints. The robot can move out of a newly inflated safety
+  margin without moving closer to detected surfaces. Previously inspected neighborhoods are excluded
+  from new exploration goals. It discovers the north-boundary opening from sensor rays and recognizes
   the red transition tile. It has no stored obstacle positions or route.
-- The red/black floor edge anchors a local 9-by-4 maze grid. Adjacent wall readings
-  correct odometry; the controller learns cell connections and chooses shortest
+- The red/black floor edge anchors a local 9-by-4 maze grid. Grid-aligned wall
+  readings, including distant walls, correct odometry. Floor hits and rays that
+  pass over walls while the chassis tips are rejected; the controller learns cell connections and chooses shortest
   routes to unexplored cells. Cell colors are sampled while stopped and counted
   once per cell, including when the robot revisits a dead end.
 - A camera looking ahead recognizes the red terminal before entering it and
@@ -63,6 +73,7 @@ odometry, mapping, and locked-asset checks.
 On macOS with Webots installed in `/Applications/Webots.app`, run integration tests:
 
 ```sh
+python3 tests/run_webots.py --scenario reported-start --official-lighting --output output/reported-start-after.json
 python3 tests/run_webots.py --scenario maze --output output/maze.json
 python3 tests/run_webots.py --scenario chamber --output output/chamber.json
 python3 tests/run_webots.py --scenario continuous --official-lighting --output output/continuous.json

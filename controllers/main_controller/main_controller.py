@@ -2,7 +2,7 @@
 import json
 import math
 from navigation import (PITCH, RAY_COUNT, Maze, OccupancyGrid, Odometry, Pose,
-                        cardinal_ranges, clamp, drive_to, floor_color, wrap)
+                        cardinal_ranges, clamp, drive_to, floor_color, ray_height, wrap)
 
 
 class Mission:
@@ -13,6 +13,7 @@ class Mission:
         self.maze = Maze()
         self.phase = 'initializing'
         self.target = None
+        self.field_route = []
         self.cell = (0, 0)
         self.origin = None
         self.last_plan = -1
@@ -41,6 +42,10 @@ class Mission:
         self.last_progress = now
         self.progress_pose = self.pose.x, self.pose.y
 
+    def wall_is_level(self, distance, direction):
+        height = ray_height(distance, direction*math.pi/2-self.pose.yaw, self.pose.pitch)
+        return 0.01 < height < 0.09
+
     def enter_maze(self, distances):
         self.origin = self.pose.x, self.pose.y
         self.cell = (0, 0)
@@ -49,7 +54,8 @@ class Mission:
         # The nearest west boundary supplies the entrance's lateral alignment.
         for axis, direction, sign in ((0, 2, -1), (1, 1, 1)):
             distance = distances[direction]
-            if 0.06 < distance < (2.3 if axis == 0 else 1.05):
+            if (0.06 < distance < (2.3 if axis == 0 else 1.05) and
+                    self.wall_is_level(distance, direction)):
                 expected = 0.119 + round((distance - 0.119) / PITCH) * PITCH
                 offset = sign * (expected - distance)
                 if abs(offset) < 0.08:
@@ -66,13 +72,18 @@ class Mission:
 
     def align_center(self, distances):
         nominal = self.center(self.cell)
-        # Correct wheel slip from adjacent measured walls and the cell pitch.
+        # Every maze wall lies on a grid line, including walls several cells
+        # away. Correct corridor slip before it accumulates at the first turn.
         for axis, positive, negative in ((0, 0, 2), (1, 1, 3)):
             estimates = []
-            if distances[positive] < 0.18:
-                estimates.append(nominal[axis] + 0.119 - distances[positive])
-            if distances[negative] < 0.18:
-                estimates.append(nominal[axis] - 0.119 + distances[negative])
+            for direction, sign, cells in ((positive, 1, (8 if axis == 0 else 3)-self.cell[axis]),
+                                            (negative, -1, self.cell[axis])):
+                distance = distances[direction]
+                count = round((distance-0.119)/PITCH)
+                expected = 0.119 + count*PITCH
+                if (distance > 0.05 and 0 <= count <= cells and self.wall_is_level(distance, direction) and
+                        abs(distance-expected) < 0.08):
+                    estimates.append(nominal[axis] + sign*(expected-distance))
             if estimates:
                 value = sum(estimates) / len(estimates)
                 current = self.pose.x if axis == 0 else self.pose.y
@@ -82,13 +93,14 @@ class Mission:
                 else:
                     self.pose.y = value
 
-    def step(self, now, ranges, encoders, yaw, color, max_speed=6.0, ahead_color='unknown'):
+    def step(self, now, ranges, encoders, yaw, color, max_speed=6.0, ahead_color='unknown', pitch=0.0):
         if len(ranges) != RAY_COUNT or not math.isfinite(yaw) or any(not math.isfinite(r) or r < 0 for r in ranges):
             raise ValueError('Invalid range/heading reading')
         self.color = color
+        self.wall_ranges = cardinal_ranges(ranges, yaw)
         if self.phase == 'initializing':
             self.start(ranges, yaw, color, now)
-        self.odometry.update(*encoders, yaw)
+        self.odometry.update(*encoders, yaw, pitch)
         if self.phase in ('finished', 'tie', 'failed'):
             return 0.0, 0.0
         if math.dist((self.pose.x, self.pose.y), self.progress_pose) > 0.025:
@@ -100,14 +112,19 @@ class Mission:
             if color == 'red' and self.pose.y > 0.5:
                 self.phase, self.target = 'chamber', None
                 return 0.0, 0.0
-            if now - self.last_plan > 0.4 or self.target is None:
-                path = self.field.route(self.pose)
-                self.target = path[0] if path else None
+            # Finish the selected segment before choosing its successor. Planning
+            # every few frames changes the turn waypoint while we approach a
+            # cell boundary and can alternate left/right forever at a corner.
+            if self.target is None:
+                if not self.field_route:
+                    self.field_route = self.field.route(self.pose)
+                self.target = self.field_route.pop(0) if self.field_route else None
                 self.last_plan = now
             if self.target is None:
                 return -1.8, 1.8
             if now - self.last_progress > 5:
                 self.target = None
+                self.field_route.clear()
                 self.last_plan = -1
                 self.recover_until = now + 0.6
                 self.last_progress = now
@@ -116,7 +133,8 @@ class Mission:
                 return (-1.5, -1.5) if rear > 0.10 else (-1.8, 1.8)
             if self.target is None:
                 return 0.0, 0.0
-            left, right, arrived = drive_to(self.pose, self.target, ranges, max_speed)
+            left, right, arrived = drive_to(self.pose, self.target, ranges, max_speed,
+                                           0.003 if self.field.escaping else 0.012)
             if arrived:
                 self.target = None
             return left, right
@@ -144,7 +162,7 @@ class Mission:
                 distances = cardinal_ranges(ranges, yaw)
                 if distances[0] < 0.20 and distances[2] < 0.20:
                     self.target = (self.pose.x + (distances[0] - distances[2]) / 2, self.pose.y)
-                    if self.pose.distance(self.target) > 0.012:
+                    if math.dist(self.pose.axle, self.target) > 0.012:
                         return left, right
                 self.enter_maze(cardinal_ranges(ranges, yaw))
             return left, right
@@ -183,11 +201,16 @@ class Mission:
             if abs(error) > 0.025:
                 turn = clamp(error * 4, -1.5, 1.5)
                 return -turn, turn
+            distances = cardinal_ranges(ranges, yaw)
+            if not all(self.wall_is_level(distance, direction) for direction, distance in enumerate(distances)):
+                # A forward ray can hit the floor as the base tips. It must
+                # not become a short wall or a false grid-position correction.
+                self.samples = []
+                return 0.0, 0.0
             self.samples.append(color)
             if len(self.samples) < 3:
                 return 0.0, 0.0
             observed = max(set(self.samples), key=self.samples.count)
-            distances = cardinal_ranges(ranges, yaw)
             self.align_center(distances)
             self.maze.observe(self.cell, distances, observed)
             route = self.maze.next_route(self.cell)
@@ -205,6 +228,10 @@ class Mission:
 
     def telemetry(self):
         return {'phase': self.phase, 'floor': self.color, 'pose': [self.pose.x, self.pose.y, self.pose.yaw],
+                'target': self.target,
+                'pitch': self.pose.pitch,
+                'walls': getattr(self, 'wall_ranges', []),
+                'field_goal': self.field.goal if self.phase == 'field' else None,
                 'visited': len(self.maze.visited), 'counts': self.maze.counts,
                 'majority': self.maze.majority if self.phase == 'finished' else None,
                 'error': self.error}
@@ -241,9 +268,10 @@ def main():
         active_sensors = sensors if orientation[1] > 0.3 else startup_sensors
         try:
             left, right = mission.step(robot.getTime(), [s.getValue() for s in active_sensors],
-                                       [s.getValue() for s in encoders], imu.getRollPitchYaw()[2],
+                                       [s.getValue() for s in encoders], orientation[2],
                                        floor_color(camera.getImage(), camera.getWidth(), camera.getHeight()), maximum,
-                                       floor_color(ahead_camera.getImage(), ahead_camera.getWidth(), ahead_camera.getHeight()))
+                                       floor_color(ahead_camera.getImage(), ahead_camera.getWidth(), ahead_camera.getHeight()),
+                                       orientation[1])
         except (ValueError, RuntimeError) as error:
             mission.phase, mission.error = 'failed', str(error)
             left = right = 0.0

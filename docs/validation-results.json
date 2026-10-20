@@ -1,26 +1,92 @@
 [
   {
     "reason": "finished",
-    "time": 317.79200000000003,
-    "distance": 18.2392055226877,
+    "time": 355.488,
+    "distance": 18.693975404222424,
     "collisions": 0,
     "position": [
-      2.2101023923237952,
-      2.172636717143252,
-      0.00397384372514268
+      2.215015335864899,
+      2.185149776462471,
+      0.00397384360641171
     ],
     "inside_end": true,
-    "led_delay": 1.4399999999999977,
-    "stopped_drift": 6.167633430409703e-08,
+    "led_delay": 1.5679999999999836,
+    "stopped_drift": 4.72659844195513e-08,
     "early_led": false,
     "telemetry": {
       "phase": "finished",
       "floor": "red",
       "pose": [
-        2.208547308340503,
-        2.1786952393600063,
-        1.5889118361881085
+        2.229298992211054,
+        2.208623278662634,
+        1.5713609765414391
       ],
+      "target": null,
+      "pitch": 0.6433467150071969,
+      "walls": [
+        0.11398467809810237,
+        0.13885642322538816,
+        0.1140153582469619,
+        0.8491437460455876
+      ],
+      "field_goal": null,
+      "visited": 36,
+      "counts": {
+        "blue": 2,
+        "green": 3
+      },
+      "majority": "green",
+      "error": null,
+      "leds": {
+        "blue": 0,
+        "green": 1
+      },
+      "wheels": [
+        0.0,
+        0.0
+      ]
+    },
+    "scenario": "reported-start",
+    "seed": 42,
+    "official_lighting": true,
+    "runtime_sha256": {
+      "controllers/main_controller/main_controller.py": "164bf62c2febfb86de64564286fa1c91f8c0b34602123c085973b9cd62d3e43c",
+      "controllers/main_controller/navigation.py": "fb114c78814230130ac8df1a102d89202fdfeb33328f4caea861f7db33c33b40",
+      "protos/TwoWheelRobot.proto": "7f6fc72c77db24299500b027ed948aa8c9358f28a93ff00ddc30b8c9335424ae"
+    },
+    "passed": true
+  },
+  {
+    "reason": "finished",
+    "time": 339.072,
+    "distance": 18.621606724481293,
+    "collisions": 0,
+    "position": [
+      2.2150153448933074,
+      2.185149748518877,
+      0.00397384360631535
+    ],
+    "inside_end": true,
+    "led_delay": 1.5679999999999836,
+    "stopped_drift": 4.727499914280781e-08,
+    "early_led": false,
+    "telemetry": {
+      "phase": "finished",
+      "floor": "red",
+      "pose": [
+        2.2293273018953497,
+        2.219427820423527,
+        1.571361368830284
+      ],
+      "target": null,
+      "pitch": 0.643346710110938,
+      "walls": [
+        0.11398466977516437,
+        0.13885645124894802,
+        0.11401536662181362,
+        0.8491437182477376
+      ],
+      "field_goal": null,
       "visited": 36,
       "counts": {
         "blue": 2,
@@ -41,34 +107,43 @@
     "seed": 42,
     "official_lighting": true,
     "runtime_sha256": {
-      "controllers/main_controller/main_controller.py": "d21e17dc692078d59b49a171cb3cd9eb2378534d29fd146290d5fc63521da49e",
-      "controllers/main_controller/navigation.py": "fa07b9232da7b290358a4206b15038e02119fb902b50a57f21a92197391c7eec",
+      "controllers/main_controller/main_controller.py": "164bf62c2febfb86de64564286fa1c91f8c0b34602123c085973b9cd62d3e43c",
+      "controllers/main_controller/navigation.py": "fb114c78814230130ac8df1a102d89202fdfeb33328f4caea861f7db33c33b40",
       "protos/TwoWheelRobot.proto": "7f6fc72c77db24299500b027ed948aa8c9358f28a93ff00ddc30b8c9335424ae"
     },
     "passed": true
   },
   {
     "reason": "finished",
-    "time": 243.296,
-    "distance": 14.602841072209607,
+    "time": 237.44,
+    "distance": 14.806860901343452,
     "collisions": 0,
     "position": [
-      2.210102380814432,
-      2.172635530492907,
-      0.003973843608042683
+      2.2150153320865704,
+      2.1851497714994026,
+      0.003973843723022091
     ],
     "inside_end": true,
-    "led_delay": 1.4399999999999977,
-    "stopped_drift": 4.6937451889371155e-08,
+    "led_delay": 1.5679999999999836,
+    "stopped_drift": 6.207191002636452e-08,
     "early_led": false,
     "telemetry": {
       "phase": "finished",
       "floor": "red",
       "pose": [
-        1.995101708505118,
-        0.8976720859962579,
-        1.5889113321068544
+        2.0000154073578424,
+        0.9102110522080507,
+        1.5713606359071743
       ],
+      "target": null,
+      "pitch": 0.6433467150091177,
+      "walls": [
+        0.1139846838252558,
+        0.138856428017533,
+        0.11401535248045955,
+        0.8491437410829348
+      ],
+      "field_goal": null,
       "visited": 36,
       "counts": {
         "blue": 2,
@@ -85,36 +160,47 @@
         0.0
       ]
     },
-    "passed": true,
+    "scenario": "chamber",
+    "seed": 42,
+    "official_lighting": false,
     "runtime_sha256": {
-      "controllers/main_controller/main_controller.py": "d21e17dc692078d59b49a171cb3cd9eb2378534d29fd146290d5fc63521da49e",
-      "controllers/main_controller/navigation.py": "fa07b9232da7b290358a4206b15038e02119fb902b50a57f21a92197391c7eec",
+      "controllers/main_controller/main_controller.py": "164bf62c2febfb86de64564286fa1c91f8c0b34602123c085973b9cd62d3e43c",
+      "controllers/main_controller/navigation.py": "fb114c78814230130ac8df1a102d89202fdfeb33328f4caea861f7db33c33b40",
       "protos/TwoWheelRobot.proto": "7f6fc72c77db24299500b027ed948aa8c9358f28a93ff00ddc30b8c9335424ae"
     },
-    "scenario": "chamber"
+    "passed": true
   },
   {
     "reason": "finished",
-    "time": 348.64,
-    "distance": 21.111759322040115,
+    "time": 387.36,
+    "distance": 22.069786684917865,
     "collisions": 0,
     "position": [
-      0.20779152357246622,
-      1.7248981698008672,
-      0.003973843716834999
+      0.21976976760697106,
+      1.7260011392089942,
+      0.003973843716792144
     ],
     "inside_end": true,
     "led_delay": 1.5679999999999836,
-    "stopped_drift": 6.249860917801542e-08,
+    "stopped_drift": 6.26630510694103e-08,
     "early_led": false,
     "telemetry": {
       "phase": "finished",
       "floor": "red",
       "pose": [
-        0.21733578373599838,
-        1.739811885453809,
-        -1.5620954254899828
+        0.22918504795655334,
+        1.7593422053535754,
+        -1.5609126523330865
       ],
+      "target": null,
+      "pitch": 0.6433467147473642,
+      "walls": [
+        0.11923611813411449,
+        0.598021901622703,
+        0.11877550705668025,
+        0.14001415503427983
+      ],
+      "field_goal": null,
       "visited": 36,
       "counts": {
         "blue": 3,
@@ -135,8 +221,8 @@
     "seed": 42,
     "official_lighting": false,
     "runtime_sha256": {
-      "controllers/main_controller/main_controller.py": "d21e17dc692078d59b49a171cb3cd9eb2378534d29fd146290d5fc63521da49e",
-      "controllers/main_controller/navigation.py": "fa07b9232da7b290358a4206b15038e02119fb902b50a57f21a92197391c7eec",
+      "controllers/main_controller/main_controller.py": "164bf62c2febfb86de64564286fa1c91f8c0b34602123c085973b9cd62d3e43c",
+      "controllers/main_controller/navigation.py": "fb114c78814230130ac8df1a102d89202fdfeb33328f4caea861f7db33c33b40",
       "protos/TwoWheelRobot.proto": "7f6fc72c77db24299500b027ed948aa8c9358f28a93ff00ddc30b8c9335424ae"
     },
     "passed": true

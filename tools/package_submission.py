@@ -37,7 +37,8 @@ def package(team, destination):
     validate()
     destination.mkdir(parents=True, exist_ok=True)
     archive = destination / (team + '_Submission.zip')
-    files = [ROOT / 'README.md', *(ROOT / 'docs').glob('*.md')]
+    files = [ROOT / 'README.md', *(ROOT / 'docs').glob('*.md'),
+             *(ROOT / 'docs').glob('*.json')]
     for folder in ('controllers/main_controller', 'protos', 'worlds'):
         files.extend(p for p in (ROOT / folder).rglob('*')
                      if p.is_file() and not any(part.startswith('.') or part == '__pycache__'
